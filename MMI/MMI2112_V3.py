@@ -1,0 +1,241 @@
+from technologies import silicon_photonics
+from picazzo3.filters.mmi.cell import MMI1x2Tapered
+from picazzo3.filters.mmi.cell import MMI2x1Tapered
+# from picazzo3.filters.mmi.cell import MMI2x2Tapered
+from picazzo3.traces.wire_wg.trace import WireWaveguideTemplate
+
+from picazzo3.traces.wire_wg import WireWaveguideTransitionLinear
+
+from picazzo3.routing.place_route import PlaceAndAutoRoute
+from picazzo3.container.transition_ports import AutoTransitionPorts
+
+import ipkiss3.all as i3
+import numpy as np
+
+
+class MMI2112(PlaceAndAutoRoute):
+    wg_t1 = i3.WaveguideTemplateProperty()
+    wg_sm = i3.WaveguideTemplateProperty()
+    wg_sm2 = i3.WaveguideTemplateProperty()
+    mmi_trace_template = i3.WaveguideTemplateProperty()
+    mmi_access_template = i3.WaveguideTemplateProperty()
+
+    mmi1_12 = i3.ChildCellProperty()
+    mmi1_21 = i3.ChildCellProperty()
+    # mmi1_12_taper = i3.ChildCellProperty()
+    # mmi1_21_taper = i3.ChildCellProperty()
+    WG1 = i3.ChildCellProperty()
+    WG2 = i3.ChildCellProperty()
+
+    length = i3.PositiveNumberProperty(doc="MMI length", default=97)
+
+    def _default_links(self):
+        links = [
+            # ("MMI1a:out2", "WGuptaper2:out"),
+            # ("MMI1a:out1", "WGdowntaper2:out"),
+            ("MMI1b:out", "MMI1a:in"),
+            # ("WGuptaper:out", "MMI1b:in2"),
+            # ("WGdowntaper:out", "MMI1b:in1")
+        ]
+        return links
+
+    def _default_child_cells(self):
+        child_cells = {
+            "MMI1a": self.mmi1_12,
+            "MMI1b": self.mmi1_21,
+            # "WGup": self.WG1,
+            # "WGdown": self.WG1,
+            # "WGup2": self.WG1,
+            # "WGdown2": self.WG1,
+            # "WGuptaper": self.WG2,
+            # "WGdowntaper": self.WG2,
+            # "WGuptaper2": self.WG2,
+            # "WGdowntaper2": self.WG2
+        }
+        return child_cells
+
+    def _default_trace_template(self):
+        trace_template = self.wg_sm2
+        return trace_template
+
+    def _default_mmi1_12(self):
+        mmi12 = MMI1x2Tapered(mmi_trace_template=self.mmi_trace_template,
+                                input_trace_template=self.mmi_access_template,
+                                output_trace_template=self.mmi_access_template,
+                                trace_template=self.wg_sm,
+                                port_labels=["out1", "out2"],
+                                )
+
+        mmi12.Layout(transition_length=200.0, length=self.length, trace_spacing=11.0)
+
+        mmi1_12_taper = AutoTransitionPorts(name="MMI12{}".format(str(np.random.randint(0, 10000))),
+                                            contents=mmi12,
+                                            port_labels=['in'],
+                                            trace_template=self.wg_sm2)
+        mmi1_12_taper.Layout(transition_length=200.0)
+
+        return mmi1_12_taper
+
+    # def _default_mmi1_12_taper(self):
+    #     mmi1_12_taper = AutoTransitionPorts(contents=self.mmi1_12,
+    #                                         port_labels=['in'],
+    #                                         trace_template=self.wg_sm2)
+    #     mmi1_12_taper.Layout(transition_length=200.0)
+    #     return mmi1_12_taper
+
+    def _default_mmi1_21(self):
+        mmi21 = MMI2x1Tapered(mmi_trace_template=self.mmi_trace_template,
+                              input_trace_template=self.mmi_access_template,
+                              output_trace_template=self.mmi_access_template,
+                              trace_template=self.wg_sm,
+                              port_labels=["in1", "in2"],
+                              )
+        mmi21.Layout(transition_length=200.0, length=self.length, trace_spacing=11.0) #.visualize(annotate=True)
+
+        mmi1_12_taper = AutoTransitionPorts(name="MMI21{}".format(str(np.random.randint(0, 10000))),
+                                            contents=mmi21,
+                                            port_labels=['out'],
+                                            trace_template=self.wg_sm2)
+        mmi1_12_taper.Layout(transition_length=200.0)     #.visualize(annotate=True)
+
+        return mmi1_12_taper
+
+    # def _default_mmi1_21_taper(self):
+    #     mmi1_21_taper = AutoTransitionPorts(contents=self.mmi1_21,
+    #                                         port_labels=['out'],
+    #                                         trace_template=self.wg_sm2)
+    #     return mmi1_21_taper
+
+    def _default_WG2(self):
+        WG2 = WireWaveguideTransitionLinear(start_trace_template=self.wg_t1,
+                                            end_trace_template=self.wg_sm)
+        return WG2
+
+    def _default_WG1(self):
+        WG1 = i3.Waveguide(name="Dongbo", trace_template=self.wg_t1)
+        return WG1
+
+    def _default_wg_t1(self):
+        wg_t1 = WireWaveguideTemplate()
+        wg_t1.Layout(core_width=15.0,
+                     cladding_width=15.0 + 16.0,
+                     core_process=i3.TECH.PROCESS.WG)
+        return wg_t1
+
+    def _default_wg_sm(self):
+        wg_sm = WireWaveguideTemplate()
+        wg_sm.Layout(core_width=3.8, cladding_width=3.8 + 16.0)
+        return wg_sm
+
+    def _default_wg_sm2(self):
+        wg_sm2 = WireWaveguideTemplate()
+        wg_sm2.Layout(core_width=3.1, cladding_width=3.1 + 16.0)
+        return wg_sm2
+
+    def _default_mmi_trace_template(self):
+        mmi_trace_template = WireWaveguideTemplate()
+        mmi_trace_template.Layout(core_width=20.0, cladding_width=20.0 + 16.0)  # MMI_width
+        return mmi_trace_template
+
+    def _default_mmi_access_template(self):
+        mmi_access_template = WireWaveguideTemplate()
+        mmi_access_template.Layout(core_width=9.0, cladding_width=9.0 + 16.0)
+        return mmi_access_template
+
+    # def _default_child_transformations(self):
+    #     child_transformations = {"MMI1a": (500 + self.length, 0)
+    #                              # "MMI1b": (1300, 0),
+    #                              # "WGup": (0, 4000),
+    #                              # "WGuptaper": (0, 4000),
+    #                              # "WGdown": (0, -4000),
+    #                              # "WGdowntaper": (0, -4000),
+    #                              # "WGuptaper2": i3.HMirror() + i3.Translation((3400, 4000)),
+    #                              # "WGdowntaper2": i3.HMirror() + i3.Translation((3400, -4000)),
+    #                              # "WGup2": (3250, 4000),
+    #                              # "WGdown2": (3250, -4000)
+    #                              }
+    #     return child_transformations
+
+
+    class Layout(PlaceAndAutoRoute.Layout):
+
+        # def _default_WG1(self):
+        #     layout_WG1 = self.cell.WG1.get_default_view(i3.LayoutView)
+        #     layout_WG1.set(shape=[(0.0, 0.0), (150.0, 0.0)])
+        #     return layout_WG1
+        #
+        # def _default_WG2(self):
+        #     layout_WG2 = self.cell.WG2.get_default_view(i3.LayoutView)
+        #     layout_WG2.set(start_position=(150.0, 0.0), end_position=(450.0, 0.0))
+        #     return layout_WG2
+
+        # def _default_mmi1_12(self):
+        #     layout_mmi1_12 = self.cell.mmi1_12.get_default_view(i3.LayoutView)
+        #     layout_mmi1_12.set(transition_length=200.0, length=self.length, trace_spacing=11.0)
+        #     return layout_mmi1_12
+
+        # def _default_mmi1_12_taper(self):
+        #     layout_mmi1_12_taper = self.cell.mmi1_12_taper.get_default_view(i3.LayoutView)
+        #     layout_mmi1_12_taper.set(transition_length=200.0)
+        #     return layout_mmi1_12_taper
+
+        # def _default_mmi1_21(self):
+        #     layout_mmi1_21 = self.cell.mmi1_21.get_default_view(i3.LayoutView)
+        #     layout_mmi1_21.set(transition_length=200.0, length=self.length, trace_spacing=11.0)
+        #     # print layout_mmi1_21.ports['in1'].x
+        #     return layout_mmi1_21
+
+        def _default_child_transformations(self):
+            # print self.cell.mmi1_12.get_default_view(i3.LayoutView).length
+            # print self.cell.mmi1_21.get_default_view(i3.LayoutView).ports['in1'].x
+            # print self.cell.mmi1_21.get_default_view(i3.LayoutView).ports['out'].x
+            a = self.cell.mmi1_21.get_default_view(i3.LayoutView).ports['out'].x - self.cell.mmi1_21.get_default_view(i3.LayoutView).ports['in1'].x
+            child_transformations = {"MMI1a": (a+90, 0),
+                                     # "MMI1b": (1300, 0),
+                                     # "WGup": (0, 4000),
+                                     # "WGuptaper": (0, 4000),
+                                     # "WGdown": (0, -4000),
+                                     # "WGdowntaper": (0, -4000),
+                                     # "WGuptaper2": i3.HMirror() + i3.Translation((3400, 4000)),
+                                     # "WGdowntaper2": i3.HMirror() + i3.Translation((3400, -4000)),
+                                     # "WGup2": (3250, 4000),
+                                     # "WGdown2": (3250, -4000)
+                                     }
+            return child_transformations
+
+        def _default_bend_radius(self):
+            bend_radius = 300
+            return bend_radius
+
+
+# mmi1 = MMI2112(length=120)
+# mmi1_layout = mmi1.Layout()
+# mmi1_layout.visualize(annotate=True)
+# print mmi1_layout.ports
+# mmi1_layout.write_gdsii("MMI2112_V3.gds")
+
+# mmi2 = v8()
+# mmi2_layout = mmi2.Layout(length=398)
+# mmi3 = v8()
+# mmi3_layout = mmi3.Layout(length=406)
+# #
+# pr = PlaceAndAutoRoute(
+#     child_cells={
+#         "1": mmi1,
+#         "2": mmi2,
+#         "3": mmi3
+#     }
+# )
+# pr_layout = pr.Layout(
+#     child_transformations={
+#         "1": (0, 0),
+#         "2": i3.HMirror() + i3.Translation((6000, 0)),
+#         "3": (6000, 0)
+#     }
+# )
+# pr_layout.visualize()
+# pr_layout.write_gdsii("MMI22_V1.gds")
+# #
+# # #layout.visualize(annotate=True)
+# #
+# # # # my_ring_layout.write_gdsii("my_ring.gds")
