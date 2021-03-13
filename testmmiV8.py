@@ -127,8 +127,8 @@ class ring(PlaceAndAutoRoute):
 
 
 
-mmi1= v8()
-mmi2= v8()
+mmi1= ring()
+mmi2= ring()
 mmi1_layout = mmi1.Layout(length=300)
 mmi2_layout = mmi2.Layout(length=400)
 
