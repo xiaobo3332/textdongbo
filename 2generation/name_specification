@@ -1,0 +1,27 @@
+10_NO:
+The width of port=10um, NO=normal span
+    length of MMI22: 382.0, 390.0, 398.0, 406.0, 414.0
+    length of MMI2112: 92, 97, 102
+    directional coupler:
+        width=2.8 gap=2 length=868
+        width=2.8 gap=2 length=888
+        width=3.8 gap=1.5 length=923
+    spare waveguide *2
+
+15_NO,20_NO......
+
+10_NOW:
+The width of port=10um, NOW=wider span
+    length of MMI22: 378.0, 388.0, 398.0, 408.0, 418.0
+    length of MMI2112: 87, 97, 107
+    directional coupler:
+        width=2.8 gap=2 length=868
+        width=2.8 gap=2 length=888
+        width=3.8 gap=1.5 length=923
+    spare waveguide *2
+
+15_NOW,20_NOW......
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+width of markers=0.6+0.2*i
+0.6 0.8 1 1.2 1.4 1.6 1.8 2 2.2 2.4 2.6 2.8 3 3.2 3.4 3.6 3.8 4 4.2 4.4

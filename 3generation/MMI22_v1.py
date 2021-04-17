@@ -7,8 +7,8 @@ from picazzo3.container.transition_ports import AutoTransitionPorts
 from picazzo3.filters.mmi.cell import MMI2x2Tapered
 from MMI2112 import MMI2112
 from picazzo3.wg.dircoup import SBendDirectionalCoupler
-from dicingmarkers import dicingMarker
-from label import label
+# from dicingmarkers import dicingMarker
+# from label import label
 
 
 class my_dc(PlaceAndAutoRoute):
@@ -429,11 +429,11 @@ dcc_15_layout = dcc_15.Layout()
 dcc_20 = my_dc(gap_inc_vec=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], name="ring6", width=20.0)
 dcc_20_layout = dcc_20.Layout()
 
-marker = dicingMarker()
-marker_layout = marker.Layout()
-
-marker2 = label()
-marker2_layout = marker2.Layout()
+# marker = dicingMarker()
+# marker_layout = marker.Layout()
+#
+# marker2 = label()
+# marker2_layout = marker2.Layout()
 
 pr = PlaceComponents(
     child_cells={
@@ -443,8 +443,8 @@ pr = PlaceComponents(
         "comp4": dcc_10,
         "comp5": dcc_15,
         "comp6": dcc_20,
-        "marker1": marker,
-        "marker2": marker2,
+        # "marker1": marker,
+        # "marker2": marker2,
 
     }
 )
@@ -454,8 +454,8 @@ pr_layout = pr.Layout(child_transformations={"comp1": (0, 0),
                                              "comp5": (0, 7000),
                                              "comp3": (6000, 7000),
                                              "comp6": (12000, 7000),
-                                             "marker1": (-100, -400),
-                                             "marker2": (650, 3900),
+                                             # "marker1": (-100, -400),
+                                             # "marker2": (650, 3900),
 
                                              })
 # pr_layout.visualize()
