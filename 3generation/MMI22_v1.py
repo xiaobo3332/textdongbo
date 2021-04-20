@@ -7,8 +7,10 @@ from picazzo3.container.transition_ports import AutoTransitionPorts
 from picazzo3.filters.mmi.cell import MMI2x2Tapered
 from MMI2112 import MMI2112
 from picazzo3.wg.dircoup import SBendDirectionalCoupler
-# from dicingmarkers import dicingMarker
-# from label import label
+
+from dicingmarkers import dicingMarker
+from label import label
+from edge import edge
 
 
 class my_dc(PlaceAndAutoRoute):
@@ -21,9 +23,12 @@ class my_dc(PlaceAndAutoRoute):
     WG3 = i3.ChildCellProperty(doc="dummy SM waveguide")  # define this to guide route
     wg_t1 = i3.WaveguideTemplateProperty(doc="board WG")
     wg_dc = i3.WaveguideTemplateProperty(doc="dc WG")
+    wg_dc2 = i3.WaveguideTemplateProperty(doc="dc WG2")
+    wg_dc3 = i3.WaveguideTemplateProperty(doc="dc WG3")
     mmi_trace_template = i3.WaveguideTemplateProperty()
     mmi_access_template = i3.WaveguideTemplateProperty()
     width = i3.PositiveNumberProperty(doc="width of ports", default=15)
+    dc_length = i3.PositiveNumberProperty(doc="length of DC", default=888)
 
     def _default_wg_t1(self):
         wg_t1 = WireWaveguideTemplate(name="port_{}".format(str(self.width)))
@@ -33,9 +38,23 @@ class my_dc(PlaceAndAutoRoute):
         return wg_t1
 
     def _default_wg_dc(self):
-        wg_t1 = WireWaveguideTemplate(name="dc")
+        wg_t1 = WireWaveguideTemplate(name="dca")
         wg_t1.Layout(core_width=2.8,
                      cladding_width=2.8 + 2 * 12.0,
+                     )
+        return wg_t1
+
+    def _default_wg_dc2(self):
+        wg_t1 = WireWaveguideTemplate(name="dcb")
+        wg_t1.Layout(core_width=2.5,
+                     cladding_width=2.5 + 2 * 12.0,
+                     )
+        return wg_t1
+
+    def _default_wg_dc3(self):
+        wg_t1 = WireWaveguideTemplate(name="dcc")
+        wg_t1.Layout(core_width=2.2,
+                     cladding_width=2.2 + 2 * 12.0,
                      )
         return wg_t1
 
@@ -46,7 +65,7 @@ class my_dc(PlaceAndAutoRoute):
 
     def _default_WG1(self):
         wg1 = i3.Waveguide(name="straight{}".format(str(self.width)), trace_template=self.wg_t1)
-        wg1.Layout(shape=[(0.0, 0.0), (150.0, 0.0)])
+        wg1.Layout(shape=[(0.0, 0.0), (300.0, 0.0)])
         return wg1
 
     def _default_WG3(self):
@@ -119,7 +138,7 @@ class my_dc(PlaceAndAutoRoute):
 
     def _default_child_cells(self):
         child_cells = dict()
-        for counter in range(0, 16, 1):
+        for counter in range(0, 22, 1):  # Routing dummy
             print counter
             child_cells['straight1' + str(counter)] = self.WG3
 
@@ -130,7 +149,7 @@ class my_dc(PlaceAndAutoRoute):
             # child_cells['straight2' + str(counter)] = self.WG3
             child_cells['taper_out' + str(counter)] = self.WG2
 
-        for counter in range(0, 16, 1):
+        for counter in range(0, 22, 1):  # Routing dummy
             child_cells['straight2' + str(counter)] = self.WG3
 
         for counter, child in enumerate(self.DC_list):
@@ -145,10 +164,10 @@ class my_dc(PlaceAndAutoRoute):
             print 'child name ' + str(child.name)
             print child
 
-        child = SBendDirectionalCoupler(name="dc3", trace_template1=self.trace_template,
-                                        coupler_length=923)
-        child.Layout(coupler_spacing=1.5 + 3.8,
-                     straight_after_bend=970,
+        child = SBendDirectionalCoupler(name="dc3", trace_template1=self.wg_dc3,
+                                        coupler_length=self.dc_length)
+        child.Layout(coupler_spacing=2 + 2.2,
+                     straight_after_bend=50,
                      # bend_angle=30.0,
                      bend_angles1=(20, 20),
                      bend_angles2=(40, 40),
@@ -156,10 +175,10 @@ class my_dc(PlaceAndAutoRoute):
                      )
         child_cells['dc3'] = child
 
-        child = SBendDirectionalCoupler(name="dc2", trace_template1=self.wg_dc,
-                                        coupler_length=888)
-        child.Layout(coupler_spacing=2 + 2.8,
-                     straight_after_bend=860,
+        child = SBendDirectionalCoupler(name="dc2", trace_template1=self.wg_dc2,
+                                        coupler_length=self.dc_length)
+        child.Layout(coupler_spacing=2 + 2.5,
+                     straight_after_bend=50,
                      # bend_angle=30.0,
                      bend_angles1=(20, 20),
                      bend_angles2=(40, 40),
@@ -169,9 +188,9 @@ class my_dc(PlaceAndAutoRoute):
         child_cells['dc2'] = child
 
         child = SBendDirectionalCoupler(name="dc1", trace_template1=self.wg_dc,
-                                        coupler_length=868)
+                                        coupler_length=self.dc_length)
         child.Layout(coupler_spacing=2 + 2.8,
-                     straight_after_bend=750,
+                     straight_after_bend=50,
                      # bend_angle=30.0,
                      bend_angles1=(20, 20),
                      bend_angles2=(40, 40),
@@ -242,32 +261,62 @@ class my_dc(PlaceAndAutoRoute):
 
             if counter % 2 == 0:
                 i_port = "straight1{}:out".format(counter)
-                o_port = "mmi{}:MMI1b_in1".format((counter - 10) // 2)
+                o_port = "mmi{}:narrow_in".format((counter - 10) // 2)
                 links.append((i_port, o_port))
                 i_port = "straight2{}:in".format(counter)
                 o_port = "mmi{}:MMI1a_out1".format((counter - 10) // 2)
                 links.append((i_port, o_port))
             else:
-                ii_port = "straight1{}:out".format(counter)
-                oo_port = "mmi{}:MMI1b_in2".format((counter - 10) // 2)
-                links.append((ii_port, oo_port))
+                # ii_port = "straight1{}:out".format(counter)
+                # oo_port = "mmi{}:MMI1b_in2".format((counter - 10) // 2)
+                # links.append((ii_port, oo_port))
 
                 ii_port = "straight2{}:in".format(counter)
                 oo_port = "mmi{}:MMI1a_out2".format((counter - 10) // 2)
                 links.append((ii_port, oo_port))
 
-        links.append(("taper_in16:out", "dc1:in1")),
-        links.append(("taper_in17:out", "dc1:in2")),
-        links.append(("taper_out16:out", "dc1:out1")),
-        links.append(("taper_out17:out", "dc1:out2")),
-        links.append(("taper_in18:out", "dc2:in1")),
-        links.append(("taper_in19:out", "dc2:in2")),
-        links.append(("taper_out18:out", "dc2:out1")),
-        links.append(("taper_out19:out", "dc2:out2")),
-        links.append(("taper_in20:out", "dc3:in1")),
-        links.append(("taper_in21:out", "dc3:in2")),
-        links.append(("taper_out20:out", "dc3:out1")),
-        links.append(("taper_out21:out", "dc3:out2")),
+        for counter in range(16, 22, 1):
+            # in_port = "Spiral{}:in".format(counter)
+            in_port = "taper_in{}:out".format(counter)
+            # links.append((in_port, out_port))
+            # in_port = "Spiral{}:out".format(counter)
+            out_port = "straight1{}:in".format(counter)
+            links.append((in_port, out_port))
+
+            in_port = "taper_out{}:out".format(counter)
+            # links.append((in_port, out_port))
+            # in_port = "Spiral{}:out".format(counter)
+            out_port = "straight2{}:out".format(counter)
+            links.append((in_port, out_port))
+
+            if counter % 2 == 0:
+                i_port = "straight1{}:out".format(counter)
+                o_port = "dc{}:in1".format((counter - 16) // 2 + 1)
+                links.append((i_port, o_port))
+                i_port = "straight2{}:in".format(counter)
+                o_port = "dc{}:out1".format((counter - 16) // 2 + 1)
+                links.append((i_port, o_port))
+            else:
+                ii_port = "straight1{}:out".format(counter)
+                oo_port = "dc{}:in2".format((counter - 16) // 2 + 1)
+                links.append((ii_port, oo_port))
+
+                ii_port = "straight2{}:in".format(counter)
+                oo_port = "dc{}:out2".format((counter - 16) // 2 + 1)
+                links.append((ii_port, oo_port))
+
+        # links.append(("taper_in16:out", "dc1:in1")),
+        # links.append(("taper_in17:out", "dc1:in2")),
+        # links.append(("taper_out16:out", "dc1:out1")),
+        # links.append(("taper_out17:out", "dc1:out2")),
+        # links.append(("taper_in18:out", "dc2:in1")),
+        # links.append(("taper_in19:out", "dc2:in2")),
+        # links.append(("taper_out18:out", "dc2:out1")),
+        # links.append(("taper_out19:out", "dc2:out2")),
+        # links.append(("taper_in20:out", "dc3:in1")),
+        # links.append(("taper_in21:out", "dc3:in2")),
+        # links.append(("taper_out20:out", "dc3:out1")),
+        # links.append(("taper_out21:out", "dc3:out2")),
         links.append(("taper_in22:out", "dc4:in1")),
         links.append(("taper_in23:out", "dc4:in2")),
         links.append(("taper_out22:out", "dc4:out1")),
@@ -305,7 +354,7 @@ class my_dc(PlaceAndAutoRoute):
                 trans['taper_in' + str(counter)] = i3.Translation(
                     translation=(0, counter * column))
                 trans['taper_out' + str(counter)] = i3.HMirror(0) + i3.Translation(
-                    translation=(6000, 1000 + counter * column))
+                    translation=(6200, 1000 + counter * column))
                 # trans['straight1' + str(counter)] = i3.Translation(
                 #     translation=(1490 - counter * 30, 1670 + counter * 150), rotation=90)
                 # trans['straight2']
@@ -342,46 +391,107 @@ class my_dc(PlaceAndAutoRoute):
                 print a, b
 
             for counter, child in enumerate(self.MMI_list):
-                a = (child.ports['MMI1b_in1'].x, child.ports['MMI1b_in1'].y)
-                b = (child.ports['MMI1b_in2'].x, child.ports['MMI1b_in2'].y)
+                # a = (child.ports['MMI1b_in1'].x, child.ports['MMI1b_in1'].y)
+                a = (child.ports['narrow_in'].x, child.ports['narrow_in'].y)
+                # b = (child.ports['MMI1b_in2'].x, child.ports['MMI1b_in2'].y)
                 c = (child.ports['MMI1a_out1'].x, child.ports['MMI1a_out1'].y)
                 d = (child.ports['MMI1a_out2'].x, child.ports['MMI1a_out2'].y)
                 n = 10 + counter * 2
                 m = 10 + counter * 2 + 1
                 trans['straight1' + str(n)] = i3.Translation(translation=a) + i3.Translation(
-                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((-2 - 50 * n, 0))
-                trans['straight1' + str(m)] = i3.Translation(translation=b) + i3.Translation(
-                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((-2 - 50 * m, 0))
+                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((-2 - 50 * n - 250, 0))
+                trans['straight1' + str(m)] = i3.Translation(translation=a) + i3.Translation(
+                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((-2 - 50 * m - 250, 20))
                 trans['straight2' + str(n)] = i3.Translation(translation=c) + i3.Translation(
-                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((2 + 50 * n - 250, 0))
+                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((2 + 50 * n + 50, 0))
                 trans['straight2' + str(m)] = i3.Translation(translation=d) + i3.Translation(
-                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((2 + 50 * m - 250, 0))
-                print a, b
+                    translation=(3000, 5500 + counter * column / 1.5)) + i3.Translation((2 + 50 * m + 50, 0))
+                # print a, b
 
-            # trans['ring0'] = (2000, 2000)
-            # trans['ring1'] = (2000, 2000 + column)
-            # trans['ring2'] = (2000, 2000 + 2 * column)
-            # trans['ring3'] = (2000, 2000 + 3 * column)
-            # trans['ring4'] = (2000, 2000 + 4 * column)
-            # trans['ring0'] = (2000, 2000)
-            # trans['ring1'] = (2000, 2000 + column)
-            # trans['ring2'] = (2000, 2000 + 2 * column)
-            # trans['ring3'] = (2000, 2000 + 3 * column)
-            # trans['ring4'] = (2000, 2000 + 4 * column)
-            # trans["taper0"] = (0, 4000)
-            # trans["taper1"] = (0, -4000)
-            # trans["taper2"] = i3.HMirror(0) + i3.Translation((5000, 2500))
-            # trans["taper3"] = i3.HMirror(0) + i3.Translation((5000, -2500))
-            #
-            # trans["taper4"] = (0, 4000 + column)
-            # trans["taper5"] = (0, -4000 + column)
-            # trans["taper6"] = i3.HMirror(0) + i3.Translation((5000, 2500 + column))
-            # trans["taper7"] = i3.HMirror(0) + i3.Translation((5000, -2500 + column))
-            #
-            # trans["taper8"] = (0, 4000 + 2 * column)
-            # trans["taper9"] = (0, -4000 + 2 * column)
-            # trans["taper10"] = i3.HMirror(0) + i3.Translation((5000, 2500 + 2 * column))
-            # trans["taper11"] = i3.HMirror(0) + i3.Translation((5000, -2500 + 2 * column))
+            for counter in range(16, 18, 1):
+                a = (self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['in1'].x,
+                     self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['in1'].y)
+                # a = (self.child_cells['dc1'].ports['in1'].x, self.child_cells['dc1'].ports['in1'].y)
+
+                b = (self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['in2'].x,
+                     self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['in2'].y)
+                c = (self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['out1'].x,
+                     self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['out1'].y)
+                d = (self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['out2'].x,
+                     self.child_cells['dc1'].get_default_view(i3.LayoutView).ports['out2'].y)
+                # print a, b
+                nb = int(counter / 2 - 8)
+                # n = 10 + counter * 2
+                # m = 10 + counter * 2 + 1
+                if counter % 2 == 0:
+                    trans['straight1' + str(counter)] = i3.Translation(translation=a) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((-2 - 100 * nb - 700, 0))
+                    trans['straight2' + str(counter)] = i3.Translation(translation=c) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((2 + 100 * nb + 700, 0))
+                else:
+                    trans['straight1' + str(counter)] = i3.Translation(translation=b) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((-2 - 100 * nb - 700, 0))
+
+                    trans['straight2' + str(counter)] = i3.Translation(translation=d) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((2 + 100 * nb + 700, 0))
+
+            # return trans
+
+            for counter in range(18, 20, 1):
+                a = (self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['in1'].x,
+                     self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['in1'].y)
+                # a = (self.child_cells['dc1'].ports['in1'].x, self.child_cells['dc1'].ports['in1'].y)
+
+                b = (self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['in2'].x,
+                     self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['in2'].y)
+                c = (self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['out1'].x,
+                     self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['out1'].y)
+                d = (self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['out2'].x,
+                     self.child_cells['dc2'].get_default_view(i3.LayoutView).ports['out2'].y)
+                # print a, b
+                nb = int(counter / 2 - 8)
+                # n = 10 + counter * 2
+                # m = 10 + counter * 2 + 1
+                if counter % 2 == 0:
+                    trans['straight1' + str(counter)] = i3.Translation(translation=a) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((-2 - 100 * nb - 700, 0))
+                    trans['straight2' + str(counter)] = i3.Translation(translation=c) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((2 + 100 * nb + 700, 0))
+                else:
+                    trans['straight1' + str(counter)] = i3.Translation(translation=b) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((-2 - 100 * nb - 700, 0))
+
+                    trans['straight2' + str(counter)] = i3.Translation(translation=d) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((2 + 100 * nb + 700, 0))
+
+            # return trans
+
+            for counter in range(20, 22, 1):
+                a = (self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['in1'].x,
+                     self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['in1'].y)
+                # a = (self.child_cells['dc1'].ports['in1'].x, self.child_cells['dc1'].ports['in1'].y)
+
+                b = (self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['in2'].x,
+                     self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['in2'].y)
+                c = (self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['out1'].x,
+                     self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['out1'].y)
+                d = (self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['out2'].x,
+                     self.child_cells['dc3'].get_default_view(i3.LayoutView).ports['out2'].y)
+                # print a, b
+                nb = int(counter / 2 - 8)
+                # n = 10 + counter * 2
+                # m = 10 + counter * 2 + 1
+                if counter % 2 == 0:
+                    trans['straight1' + str(counter)] = i3.Translation(translation=a) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((-2 - 100 * nb - 700, 0))
+                    trans['straight2' + str(counter)] = i3.Translation(translation=c) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((2 + 100 * nb + 700, 0))
+                else:
+                    trans['straight1' + str(counter)] = i3.Translation(translation=b) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((-2 - 100 * nb - 700, 0))
+
+                    trans['straight2' + str(counter)] = i3.Translation(translation=d) + i3.Translation(
+                        translation=(3200, 5800 + 150 * nb)) + i3.Translation((2 + 100 * nb + 700, 0))
 
             return trans
 
@@ -391,14 +501,7 @@ class my_dc(PlaceAndAutoRoute):
 
         def _generate_elements(self, elems):
             for counter in range(0, 24, 1):
-                elems += i3.PolygonText(layer=i3.TECH.PPLAYER.WG.TEXT,
-                                        text="{}".format(str(counter)),
-                                        # coordinate=(1300.0, 100.0),
-                                        # alignment=(i3.TEXT_ALIGN_LEFT, i3.TEXT_ALIGN_LEFT),
-                                        font=2,
-                                        height=70.0,
-                                        transformation=i3.Translation((300, 100 + 150 * counter))
-                                        )
+
                 elems += i3.PolygonText(layer=i3.TECH.PPLAYER.WG.TEXT,
                                         text="{}".format(str(counter)),
                                         # coordinate=(1300.0, 100.0),
@@ -407,33 +510,51 @@ class my_dc(PlaceAndAutoRoute):
                                         height=70.0,
                                         transformation=i3.Translation((5700, 1100 + 150 * counter))
                                         )
+                if counter == 11 or counter == 13 or counter == 15:
+                    continue
+                elems += i3.PolygonText(layer=i3.TECH.PPLAYER.WG.TEXT,
+                                        text="{}".format(str(counter)),
+                                        # coordinate=(1300.0, 100.0),
+                                        # alignment=(i3.TEXT_ALIGN_LEFT, i3.TEXT_ALIGN_LEFT),
+                                        font=2,
+                                        height=70.0,
+                                        transformation=i3.Translation((400, 100 + 150 * counter))
+                                        )
 
             return elems
 
 
-dc_10 = my_dc(gap_inc_vec=[382.0, 390.0, 398.0, 406.0, 414.0], length_inc_vec=[92, 97, 102], name="ring1", width=10.0)
+dc_10 = my_dc(gap_inc_vec=[382.0, 390.0, 398.0, 406.0, 414.0], length_inc_vec=[92, 97, 102], name="ring1", width=15.0,
+              dc_length=888)
 dc_10_layout = dc_10.Layout()
 # dc_10_layout.visualize(annotate=True)
 # dc_10_layout.write_gdsii("MMI22_v1.gds")
 
-
-dc_15 = my_dc(gap_inc_vec=[382.0, 390.0, 398.0, 406.0, 414.0], length_inc_vec=[92, 97, 102], name="ring2", width=15.0)
+dc_15 = my_dc(gap_inc_vec=[420.0, 430.0, 440.0, 450.0, 460.0], length_inc_vec=[110, 120, 130], name="ring2", width=15.0,
+              dc_length=908)
 dc_15_layout = dc_15.Layout()
-dc_20 = my_dc(gap_inc_vec=[382.0, 390.0, 398.0, 406.0, 414.0], length_inc_vec=[92, 97, 102], name="ring3", width=20.0)
+dc_20 = my_dc(gap_inc_vec=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], name="ring3", width=15.0,
+              dc_length=928)
 dc_20_layout = dc_20.Layout()
 
-dcc_10 = my_dc(gap_inc_vec=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], name="ring4", width=10.0)
+dcc_10 = my_dc(gap_inc_vec=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], name="ring4", width=20.0,
+               dc_length=948)
 dcc_10_layout = dcc_10.Layout()
-dcc_15 = my_dc(gap_inc_vec=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], name="ring5", width=15.0)
+dcc_15 = my_dc(gap_inc_vec=[470.0, 480.0, 490.0, 500.0, 505.0], length_inc_vec=[140, 150, 160], name="ring5",
+               width=20.0, dc_length=968)
 dcc_15_layout = dcc_15.Layout()
-dcc_20 = my_dc(gap_inc_vec=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], name="ring6", width=20.0)
+dcc_20 = my_dc(gap_inc_vec=[420.0, 430.0, 440.0, 450.0, 460.0], length_inc_vec=[110, 120, 130], name="ring6",
+               width=20.0, dc_length=988)
 dcc_20_layout = dcc_20.Layout()
 
-# marker = dicingMarker()
-# marker_layout = marker.Layout()
-#
-# marker2 = label()
-# marker2_layout = marker2.Layout()
+marker = dicingMarker()
+marker_layout = marker.Layout()
+
+marker2 = label()
+marker2_layout = marker2.Layout()
+
+marker3 = edge()
+marker3_layout = marker3.Layout()
 
 pr = PlaceComponents(
     child_cells={
@@ -443,20 +564,23 @@ pr = PlaceComponents(
         "comp4": dcc_10,
         "comp5": dcc_15,
         "comp6": dcc_20,
-        # "marker1": marker,
-        # "marker2": marker2,
+        "marker1": marker,
+        "marker2": marker2,
+        "marker3": marker3,
 
     }
 )
 pr_layout = pr.Layout(child_transformations={"comp1": (0, 0),
-                                             "comp2": (6000, 0),
-                                             "comp4": (12000, 0),
-                                             "comp5": (0, 7000),
-                                             "comp3": (6000, 7000),
-                                             "comp6": (12000, 7000),
-                                             # "marker1": (-100, -400),
-                                             # "marker2": (650, 3900),
+                                             # "comp2": (6000, 0),
+                                             "comp2": i3.HMirror() + i3.Translation((12400, 0)),
+                                             "comp3": (12400, 0),
+                                             "comp4": (0, 7500),
+                                             "comp5": i3.HMirror() + i3.Translation((12400, 7500)),
+                                             "comp6": (12400, 7500),
+                                             "marker1": (0, 0),
+                                             "marker2": (650, 3900),
+                                             "marker3": (0,0),
 
                                              })
 # pr_layout.visualize()
-pr_layout.write_gdsii("MMI22_v4.gds")
+pr_layout.write_gdsii("MMI22_v5.gds")

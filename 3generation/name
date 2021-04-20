@@ -1,0 +1,23 @@
+DC from bottom to top:
+WG 2.8um, gap 2um
+WG 2.5um, gap 2um
+WG 2.2um, gap 2um
+
+
+1N port=15um normal span
+MMI22=[382.0, 390.0, 398.0, 406.0, 414.0], length_inc_vec=[92, 97, 102], dc_length=888
+
+2E port=15um extension
+MMI22=[420.0, 430.0, 440.0, 450.0, 460.0], length_inc_vec=[110, 120, 130], dc_length=908
+
+3W port=15um wider span
+MMI22=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], dc_length=928
+
+4W port=20um wider span
+MMI22=[378.0, 388.0, 398.0, 408.0, 418.0], length_inc_vec=[87, 97, 107], dc_length=948
+
+5J port=20um ji jin(激进)
+MMI22=[470.0, 480.0, 490.0, 500.0, 505.0], length_inc_vec=[140, 150, 160], dc_length=968
+
+6E port=20um extension
+MMI22=[420.0, 430.0, 440.0, 450.0, 460.0], length_inc_vec=[110, 120, 130], dc_length=988
