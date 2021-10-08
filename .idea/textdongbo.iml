@@ -9,7 +9,6 @@
     <content url="file://$USER_HOME$/luceda/samples/ipkiss330" />
     <orderEntry type="jdk" jdkName="Python 2.7 (ipkiss3)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="prototype" />
     <orderEntry type="module" module-name="澜哥" />
   </component>
 </module>
