@@ -1,0 +1,18 @@
+A=2750um
+B=2250um
+C=1500um
+
+1. copy Coupon2 and Coupon3
+2. open Coupon3
+    A. hide layer 3/0, 5/0, 6/0 and delete five alignment markers
+    B. select all and sizing (-10,-5)
+    C. change layer to 3/0
+    D. delete layer 4/0, 5/0, 6/0
+    E. flatten cell, rename cell and save
+3. open Coupon2
+    A. import Coupon3.gds
+    B. bool 3/0 and 6/0 = 3/0
+    C. bool 4/0 and 6/0 = 4/0
+    D. delete layer 6/0
+    E. edit layer specification "layer 3" -> "layer 1" (red color)
+    F. flatten cell and save
